@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MindMail - Emotion Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{{ background_class }}">
+    <div class="container">
+        <h1>MindMail</h1>
+        <p>Let's detect your mood</p>
+        <form method="POST">
+            <textarea name="message" placeholder="Type your message here...">{{ user_message }}</textarea>
+            <br>
+            <button type="submit" name="analyze_text">Analyze Mood</button>
+            <button type="submit" name="record_audio">🎤 Record Voice (5s)</button>
+        </form>
+
+        {% if emotion %}
+            {% set class_name = emotion.split()[0] %}
+            <div class="result {{ class_name }}">
+                Detected Emotion: {{ emotion }} <br>
+                {{ mood_message }}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
