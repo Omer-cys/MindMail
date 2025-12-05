@@ -1,3 +1,4 @@
+# audio_utils.py
 import sounddevice as sd
 import numpy as np
 import wave
@@ -8,10 +9,10 @@ def record_audio(filename="input.wav", duration=5, fs=44100):
     recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
     sd.wait()
     
-    # Save using wave
+    # Save as WAV
     with wave.open(filename, 'w') as wf:
         wf.setnchannels(1)
-        wf.setsampwidth(2)  # 16-bit
+        wf.setsampwidth(2)  # 16-bit PCM
         wf.setframerate(fs)
         wf.writeframes(recording.tobytes())
     
@@ -20,6 +21,6 @@ def record_audio(filename="input.wav", duration=5, fs=44100):
 
 def transcribe_audio(filename="input.wav"):
     print("Transcribing audio...")
-    model = whisper.load_model("base")  # or "small" if low RAM
+    model = whisper.load_model("base")  # or "small" for low RAM
     result = model.transcribe(filename)
     return result["text"]

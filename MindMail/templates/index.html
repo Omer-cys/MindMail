@@ -15,7 +15,7 @@
             <button type="submit" name="analyze_text">Analyze Mood</button>
             <button type="submit" name="record_audio">🎤 Record Voice (5s)</button>
         </form>
-
+        <div class="privacy-note">Your messages are processed locally and not stored anywhere. Your privacy is safe! 🔒</div>
         {% if emotion %}
             {% set class_name = emotion.split()[0] %}
             <div class="result {{ class_name }}">

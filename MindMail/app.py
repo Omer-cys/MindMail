@@ -1,25 +1,21 @@
-from flask import Flask, render_template, request, redirect, url_for
+# app.py
+from flask import Flask, render_template, request
+from offline_model import model_analyze
+from audio_utils import record_audio, transcribe_audio
 import re
-import sounddevice as sd
-import wave
-import numpy as np
-import whisper
-import os
 
 app = Flask(__name__)
 
-# ---------- Keyword analyzer ----------
+# Keyword fallback analyzer
 def keyword_analyze(text):
     text_lower = text.lower()
     emotions = {
         "Happy 😀": ["happy", "joy", "glad", "cheerful", "delighted", "smile"],
         "Excited 🤩": ["excited", "thrilled", "awesome", "amazing", "stoked"],
-        "Love ❤️": ["love", "affection", "like" , "adore"],
+        "Love ❤️": ["love", "affection", "like", "adore"],
         "Sad 😢": ["sad", "unhappy", "lonely", "depressed", "gloomy", "cry", "upset"],
         "Angry 😡": ["angry", "hate", "frustrated", "mad", "annoyed"],
         "Fear 😨": ["scared", "nervous", "fear", "anxious", "worried"],
-        "Confused 😕": ["confused", "unsure", "puzzled"],
-        "Tired 😴": ["tired", "sleepy", "exhausted"]
     }
     for emotion, keywords in emotions.items():
         for w in keywords:
@@ -27,29 +23,6 @@ def keyword_analyze(text):
                 return emotion
     return "Neutral 😐"
 
-# ---------- Audio recording ----------
-def record_audio(filename="input.wav", duration=5, fs=44100):
-    print("Recording audio...")
-    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1)
-    sd.wait()
-    # Convert to 16-bit PCM
-    recording = np.int16(recording * 32767)
-    with wave.open(filename, 'w') as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(fs)
-        wf.writeframes(recording.tobytes())
-    print(f"Recording saved as {filename}")
-    return filename
-
-# ---------- Audio transcription ----------
-def transcribe_audio(filename="input.wav"):
-    print("Transcribing audio...")
-    model = whisper.load_model("base")
-    result = model.transcribe(filename)
-    return result["text"]
-
-# ---------- Main route ----------
 @app.route("/", methods=["GET", "POST"])
 def index():
     emotion = None
@@ -58,16 +31,21 @@ def index():
     user_message = ""
 
     if request.method == "POST":
-        # Check if audio button was clicked
+        # If user clicked record button
         if "record_audio" in request.form:
             audio_file = record_audio(duration=5)
             user_message = transcribe_audio(audio_file)
         else:
             user_message = request.form.get("message", "")
 
-        emotion = keyword_analyze(user_message)
+        # Try offline HuggingFace model first
+        try:
+            emotion = model_analyze(user_message)
+        except Exception as e:
+            print("Model error:", e)
+            emotion = keyword_analyze(user_message)  # fallback
 
-        # Mood messages & background
+        # Mood messages & background classes
         if "Happy" in emotion:
             mood_message = "Keep smiling! Take a moment to enjoy it!"
             background_class = "happy-bg"
@@ -96,7 +74,13 @@ def index():
             mood_message = "Feeling neutral. Keep going!"
             background_class = "neutral-bg"
 
-    return render_template("index.html", emotion=emotion, mood_message=mood_message, background_class=background_class, user_message=user_message)
+    return render_template(
+        "index.html",
+        emotion=emotion,
+        mood_message=mood_message,
+        background_class=background_class,
+        user_message=user_message
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

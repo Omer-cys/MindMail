@@ -7,6 +7,7 @@ body {
 }
 h1 {
     margin-bottom: 5px; /* reduces space below the heading */
+    margin-top: -10px;
 }
 
 p {
@@ -14,12 +15,13 @@ p {
     margin-bottom: 15px; /* optional: space below the paragraph */
 }
 .container {
-    background-color: white;
+    background-color: #ffffff;
     width: 550px;
     margin: auto;
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border: 1px solid #000000;
 }
 
 textarea {
